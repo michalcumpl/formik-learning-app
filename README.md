@@ -1,73 +1,42 @@
-# React + TypeScript + Vite
+# Formik Learning App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Simple React + Vite playground that showcases how to wire a form with Formik.
 
-Currently, two official plugins are available:
+## Mock credit card REST API
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+A lightweight Node server located in `mock-api/server.js` can be used to mimic a credit card gateway with Luhn validation.
 
-## React Compiler
+### Running the server
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run mock-api
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+It listens on port `4310` by default. Use `MOCK_API_PORT=4500 npm run mock-api` to override it.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Endpoints
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/health` | Basic health check. |
+| `POST` | `/api/credit-cards` | Processes a credit card payment after validating the payload and card number with the Luhn algorithm. |
+| `GET` | `/api/credit-cards/:transactionId` | Returns the stored response for a previously mocked transaction. |
+
+### Sample request
+
+```http
+POST /api/credit-cards HTTP/1.1
+Content-Type: application/json
+
+{
+  "cardNumber": "4242424242424242",
+  "cardHolder": "Jane Doe",
+  "expirationMonth": 12,
+  "expirationYear": 2030,
+  "cvv": "123",
+  "amount": 49.99,
+  "currency": "usd"
+}
 ```
+
+If the payload passes every validation rule (presence, expiration, CVV, amount, and Luhn), the mock API responds with an approved transaction body that includes a `transactionId`, `status`, and masked card data. Validation failures return a `400` with an `errors` object keyed by the invalid fields.
